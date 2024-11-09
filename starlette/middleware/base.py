@@ -6,6 +6,7 @@ import anyio
 from anyio.abc import ObjectReceiveStream, ObjectSendStream
 
 from starlette._utils import collapse_excgroups
+from starlette.background import BackgroundTasks
 from starlette.requests import ClientDisconnect, Request
 from starlette.responses import AsyncContentStream, Response
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
@@ -206,7 +207,7 @@ class _StreamingResponse(Response):
         self.status_code = status_code
         self.media_type = media_type
         self.init_headers(headers)
-        self.background = None
+        self.background: BackgroundTasks = BackgroundTasks()
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
         if self.info is not None:
@@ -224,5 +225,4 @@ class _StreamingResponse(Response):
 
         await send({"type": "http.response.body", "body": b"", "more_body": False})
 
-        if self.background:
-            await self.background()
+        await self.background()

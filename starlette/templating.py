@@ -4,7 +4,7 @@ import typing
 import warnings
 from os import PathLike
 
-from starlette.background import BackgroundTask
+from starlette.background import BackgroundTasks
 from starlette.datastructures import URL
 from starlette.requests import Request
 from starlette.responses import HTMLResponse
@@ -33,7 +33,7 @@ class _TemplateResponse(HTMLResponse):
         status_code: int = 200,
         headers: typing.Mapping[str, str] | None = None,
         media_type: str | None = None,
-        background: BackgroundTask | None = None,
+        background: BackgroundTasks = BackgroundTasks(),
     ):
         self.template = template
         self.context = context
@@ -139,7 +139,7 @@ class Jinja2Templates:
         status_code: int = 200,
         headers: typing.Mapping[str, str] | None = None,
         media_type: str | None = None,
-        background: BackgroundTask | None = None,
+        background: BackgroundTasks = BackgroundTasks(),
     ) -> _TemplateResponse: ...
 
     @typing.overload
@@ -150,7 +150,7 @@ class Jinja2Templates:
         status_code: int = 200,
         headers: typing.Mapping[str, str] | None = None,
         media_type: str | None = None,
-        background: BackgroundTask | None = None,
+        background: BackgroundTasks = BackgroundTasks(),
     ) -> _TemplateResponse:
         # Deprecated usage
         ...
@@ -170,7 +170,7 @@ class Jinja2Templates:
                 status_code = args[2] if len(args) > 2 else kwargs.get("status_code", 200)
                 headers = args[2] if len(args) > 2 else kwargs.get("headers")
                 media_type = args[3] if len(args) > 3 else kwargs.get("media_type")
-                background = args[4] if len(args) > 4 else kwargs.get("background")
+                background = args[4] if len(args) > 4 else kwargs.get("background", BackgroundTasks())
 
                 if "request" not in context:
                     raise ValueError('context must include a "request" key')
@@ -182,7 +182,7 @@ class Jinja2Templates:
                 status_code = args[3] if len(args) > 3 else kwargs.get("status_code", 200)
                 headers = args[4] if len(args) > 4 else kwargs.get("headers")
                 media_type = args[5] if len(args) > 5 else kwargs.get("media_type")
-                background = args[6] if len(args) > 6 else kwargs.get("background")
+                background = args[6] if len(args) > 6 else kwargs.get("background", BackgroundTasks())
         else:  # all arguments are kwargs
             if "request" not in kwargs:
                 warnings.warn(
@@ -199,7 +199,10 @@ class Jinja2Templates:
             status_code = kwargs.get("status_code", 200)
             headers = kwargs.get("headers")
             media_type = kwargs.get("media_type")
-            background = kwargs.get("background")
+            background = kwargs.get(
+                "background",
+                BackgroundTasks(),
+            )
 
         context.setdefault("request", request)
         for context_processor in self.context_processors:

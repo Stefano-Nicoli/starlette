@@ -10,7 +10,7 @@ import anyio
 import pytest
 
 from starlette import status
-from starlette.background import BackgroundTask
+from starlette.background import BackgroundTask, BackgroundTasks
 from starlette.datastructures import Headers
 from starlette.requests import Request
 from starlette.responses import FileResponse, JSONResponse, RedirectResponse, Response, StreamingResponse
@@ -112,7 +112,7 @@ def test_streaming_response(test_client_factory: TestClientFactory) -> None:
 
         cleanup_task = BackgroundTask(numbers_for_cleanup, start=6, stop=9)
         generator = numbers(1, 5)
-        response = StreamingResponse(generator, media_type="text/plain", background=cleanup_task)
+        response = StreamingResponse(generator, media_type="text/plain", background=BackgroundTasks([cleanup_task]))
         await response(scope, receive, send)
 
     assert filled_by_bg_task == ""
@@ -228,7 +228,7 @@ def test_file_response(tmp_path: Path, test_client_factory: TestClientFactory) -
     cleanup_task = BackgroundTask(numbers_for_cleanup, start=6, stop=9)
 
     async def app(scope: Scope, receive: Receive, send: Send) -> None:
-        response = FileResponse(path=path, filename="example.png", background=cleanup_task)
+        response = FileResponse(path=path, filename="example.png", background=BackgroundTasks([cleanup_task]))
         await response(scope, receive, send)
 
     assert filled_by_bg_task == ""

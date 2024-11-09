@@ -8,7 +8,7 @@ import jinja2
 import pytest
 
 from starlette.applications import Starlette
-from starlette.background import BackgroundTask
+from starlette.background import BackgroundTask, BackgroundTasks
 from starlette.middleware import Middleware
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 from starlette.requests import Request
@@ -188,7 +188,7 @@ def test_templates_with_kwargs_only(tmpdir: Path, test_client_factory: TestClien
             status_code=201,
             headers={"x-key": "value"},
             media_type="text/plain",
-            background=BackgroundTask(func=spy),
+            background=BackgroundTasks([BackgroundTask(func=spy)]),
         )
 
     app = Starlette(routes=[Route("/", page)])
@@ -264,7 +264,7 @@ def test_templates_warns_when_first_argument_isnot_request(
             status_code=201,
             headers={"x-key": "value"},
             media_type="text/plain",
-            background=BackgroundTask(func=spy),
+            background=BackgroundTasks([BackgroundTask(func=spy)]),
         )
 
     app = Starlette(routes=[Route("/", page)])
@@ -296,7 +296,7 @@ def test_templates_when_first_argument_is_request(tmpdir: Path, test_client_fact
             status_code=201,
             headers={"x-key": "value"},
             media_type="text/plain",
-            background=BackgroundTask(func=spy),
+            background=BackgroundTasks([BackgroundTask(func=spy)]),
         )
 
     app = Starlette(routes=[Route("/", page)])

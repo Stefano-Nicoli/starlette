@@ -28,13 +28,16 @@ class BackgroundTask:
             await run_in_threadpool(self.func, *self.args, **self.kwargs)
 
 
-class BackgroundTasks(BackgroundTask):
+class BackgroundTasks:
     def __init__(self, tasks: typing.Sequence[BackgroundTask] | None = None):
         self.tasks = list(tasks) if tasks else []
 
     def add_task(self, func: typing.Callable[P, typing.Any], *args: P.args, **kwargs: P.kwargs) -> None:
         task = BackgroundTask(func, *args, **kwargs)
         self.tasks.append(task)
+
+    def __bool__(self) -> bool:
+        return bool(self.tasks)
 
     async def __call__(self) -> None:
         for task in self.tasks:

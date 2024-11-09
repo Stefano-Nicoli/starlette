@@ -9,7 +9,7 @@ import pytest
 from anyio.abc import TaskStatus
 
 from starlette.applications import Starlette
-from starlette.background import BackgroundTask
+from starlette.background import BackgroundTask, BackgroundTasks
 from starlette.middleware import Middleware, _MiddlewareClass
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 from starlette.requests import ClientDisconnect, Request
@@ -263,7 +263,7 @@ async def test_run_background_tasks_even_if_client_disconnects() -> None:
         background_task_run.set()
 
     async def endpoint_with_background_task(_: Request) -> PlainTextResponse:
-        return PlainTextResponse(background=BackgroundTask(sleep_and_set))
+        return PlainTextResponse(background=BackgroundTasks([BackgroundTask(sleep_and_set)]))
 
     async def passthrough(
         request: Request,
@@ -307,7 +307,7 @@ async def test_do_not_block_on_background_tasks() -> None:
         events.append("Background task finished")
 
     async def endpoint_with_background_task(_: Request) -> PlainTextResponse:
-        return PlainTextResponse(content="Hello", background=BackgroundTask(sleep_and_set))
+        return PlainTextResponse(content="Hello", background=BackgroundTasks([BackgroundTask(sleep_and_set)]))
 
     async def passthrough(request: Request, call_next: RequestResponseEndpoint) -> Response:
         return await call_next(request)
@@ -374,7 +374,7 @@ async def test_run_context_manager_exit_even_if_client_disconnects() -> None:
                 await self.app(scope, receive, send)
 
     async def simple_endpoint(_: Request) -> PlainTextResponse:
-        return PlainTextResponse(background=BackgroundTask(sleep_and_set))
+        return PlainTextResponse(background=BackgroundTasks([BackgroundTask(sleep_and_set)]))
 
     async def passthrough(
         request: Request,
@@ -1022,8 +1022,8 @@ async def test_multiple_middlewares_stacked_client_disconnected() -> None:
             def background() -> None:
                 unordered_events.append(f"{self.version}:BACKGROUND")
 
-            assert res.background is None
-            res.background = BackgroundTask(background)
+            assert not res.background
+            res.background = BackgroundTasks([BackgroundTask(background)])
             return res
 
     async def sleepy(request: Request) -> Response:

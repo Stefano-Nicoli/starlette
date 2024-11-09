@@ -3,7 +3,7 @@ from typing import Any
 import pytest
 
 from starlette.applications import Starlette
-from starlette.background import BackgroundTask
+from starlette.background import BackgroundTask, BackgroundTasks
 from starlette.middleware.errors import ServerErrorMiddleware
 from starlette.requests import Request
 from starlette.responses import JSONResponse, Response
@@ -92,7 +92,7 @@ def test_background_task(test_client_factory: TestClientFactory) -> None:
 
     async def endpoint(request: Request) -> Response:
         task = BackgroundTask(raise_exception)
-        return Response(status_code=204, background=task)
+        return Response(status_code=204, background=BackgroundTasks([task]))
 
     app = Starlette(
         routes=[Route("/", endpoint=endpoint)],

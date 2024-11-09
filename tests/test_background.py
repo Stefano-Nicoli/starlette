@@ -16,7 +16,7 @@ def test_async_task(test_client_factory: TestClientFactory) -> None:
     task = BackgroundTask(async_task)
 
     async def app(scope: Scope, receive: Receive, send: Send) -> None:
-        response = Response("task initiated", media_type="text/plain", background=task)
+        response = Response("task initiated", media_type="text/plain", background=BackgroundTasks([task]))
         await response(scope, receive, send)
 
     client = test_client_factory(app)
@@ -35,7 +35,7 @@ def test_sync_task(test_client_factory: TestClientFactory) -> None:
     task = BackgroundTask(sync_task)
 
     async def app(scope: Scope, receive: Receive, send: Send) -> None:
-        response = Response("task initiated", media_type="text/plain", background=task)
+        response = Response("task initiated", media_type="text/plain", background=BackgroundTasks([task]))
         await response(scope, receive, send)
 
     client = test_client_factory(app)

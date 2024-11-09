@@ -18,7 +18,7 @@ import anyio
 import anyio.to_thread
 
 from starlette._compat import md5_hexdigest
-from starlette.background import BackgroundTask
+from starlette.background import BackgroundTasks
 from starlette.concurrency import iterate_in_threadpool
 from starlette.datastructures import URL, Headers, MutableHeaders
 from starlette.types import Receive, Scope, Send
@@ -34,7 +34,7 @@ class Response:
         status_code: int = 200,
         headers: typing.Mapping[str, str] | None = None,
         media_type: str | None = None,
-        background: BackgroundTask | None = None,
+        background: BackgroundTasks = BackgroundTasks(),
     ) -> None:
         self.status_code = status_code
         if media_type is not None:
@@ -154,8 +154,7 @@ class Response:
         )
         await send({"type": prefix + "http.response.body", "body": self.body})
 
-        if self.background is not None:
-            await self.background()
+        await self.background()
 
 
 class HTMLResponse(Response):
@@ -175,7 +174,7 @@ class JSONResponse(Response):
         status_code: int = 200,
         headers: typing.Mapping[str, str] | None = None,
         media_type: str | None = None,
-        background: BackgroundTask | None = None,
+        background: BackgroundTasks = BackgroundTasks(),
     ) -> None:
         super().__init__(content, status_code, headers, media_type, background)
 
@@ -195,7 +194,7 @@ class RedirectResponse(Response):
         url: str | URL,
         status_code: int = 307,
         headers: typing.Mapping[str, str] | None = None,
-        background: BackgroundTask | None = None,
+        background: BackgroundTasks = BackgroundTasks(),
     ) -> None:
         super().__init__(content=b"", status_code=status_code, headers=headers, background=background)
         self.headers["location"] = quote(str(url), safe=":/%#?=@[]!$&'()*+,;")
@@ -216,7 +215,7 @@ class StreamingResponse(Response):
         status_code: int = 200,
         headers: typing.Mapping[str, str] | None = None,
         media_type: str | None = None,
-        background: BackgroundTask | None = None,
+        background: BackgroundTasks = BackgroundTasks(),
     ) -> None:
         if isinstance(content, typing.AsyncIterable):
             self.body_iterator = content
@@ -258,8 +257,7 @@ class StreamingResponse(Response):
             task_group.start_soon(wrap, partial(self.stream_response, send))
             await wrap(partial(self.listen_for_disconnect, receive))
 
-        if self.background is not None:
-            await self.background()
+        await self.background()
 
 
 class MalformedRangeHeader(Exception):
@@ -284,7 +282,7 @@ class FileResponse(Response):
         status_code: int = 200,
         headers: typing.Mapping[str, str] | None = None,
         media_type: str | None = None,
-        background: BackgroundTask | None = None,
+        background: BackgroundTasks = BackgroundTasks(),
         filename: str | None = None,
         stat_result: os.stat_result | None = None,
         method: str | None = None,
@@ -361,8 +359,7 @@ class FileResponse(Response):
             else:
                 await self._handle_multiple_ranges(send, ranges, stat_result.st_size, send_header_only)
 
-        if self.background is not None:
-            await self.background()
+        await self.background()
 
     async def _handle_simple(self, send: Send, send_header_only: bool) -> None:
         await send({"type": "http.response.start", "status": self.status_code, "headers": self.raw_headers})
